@@ -1,0 +1,100 @@
+#Kitabxanaları əlavə edək
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from scipy import stats
+
+
+
+#Warning-leri Ignore etmek ucun Kitabxana
+
+import warnings
+warnings.filterwarnings("ignore")
+
+
+
+
+#Datanı oxudaq
+path = r"C:\Users\user\Desktop\adult.csv"
+df=pd.read_csv(path)
+
+df.head()
+df.info() 
+df.shape 
+
+
+
+#Null data var mi onu yoxlayaq
+df.isnull().sum()
+
+#Bu data-da bəzi xanalarda data yox sual işərasi var idi. Bu səbəblə :
+#Icinde sual isareti olan xanalari toplayaq
+df.isin(['?']).sum()
+
+
+#Sual isaretlerin Sütunun ən çox təkrarlanan dəyəri ilə əvəz edək. 
+#Bununla Sual isaretlerinin yerinə ən çox təkrarlanan iş yeri olan Private-ı replace edir.
+df["workclass"]=df["workclass"].replace("?", df["workclass"].mode()[0])
+
+
+#İstifadə etməyəcəyimiz dataları Drop edək 
+df=df.drop(columns=["fnlwgt","educational-num","capital-gain",'capital-loss'])
+
+
+
+
+
+#Bu data Income sutununda olan <50k-ları 0 , >50k-ları 1 olaraq təyin edirik. Bununla Data-nı daha rahat Vizualzasiya edirik. 
+df["income"] = df.income.map({'<=50K': 0, '>50K': 1, '<=50K.': 0, '>50K.': 1})
+
+
+#Eyni Şəkildə Evlənməmiş Boşanmış Dul-ları Bekar digərlərini Evli olaraq ayırırıq ki daha rahat vizualzasiya edək.
+df["marriage-status"]=df["marital-status"].map({'Never-married':'Single', "Widowed" : "Single", "Divorced":"Single", "Separated":"Single",'Married-civ-spouse':"Married",'Married-spouse-absent':"Married", 'Married-AF-spouse':"Married"  })
+
+# Unikal deyerleri tapmaq ucun
+df["marital-status"].unique()
+ 
+# =============================================================================
+
+#Data-da ki Numeric dəyərlərin Statistikasını tapaq
+
+df.describe()
+
+#Data-da ki Numeric olmayan (Object) dəyərlərin Statistikasını tapaq
+df.describe(include=["O"])
+
+
+# =============================================================================
+
+#%% 
+plt.figure(figsize=(10,6))
+total = float(len(df) )
+
+ax = sns.countplot(x="income", data=df)
+for p in ax.patches:
+    height = p.get_height()
+    ax.text(p.get_x()+p.get_width()/2.,
+            height + 200,
+            '{:1.2f}'.format((height/total)*100),
+            ha="center") 
+plt.show()
+
+#Bu Grafiklə Countplot qrafiklərə Label-lar əlavə edə bilirik
+#Ancaq bu grafik hue="X" olanda işləmir. Yəni X datası Y datasına görə dağılım edəndə işləmir
+#Misal Evli insanların Gəliri 50k-nın altındadır yoxsa 50k-nın üstündədir.
+#Bunun üçün altta ki qrafikdən istifadə edilə bilər 
+
+# =============================================================================
+
+#%%
+
+ax = sns.countplot(x="marriage-status", hue="income" , data=df)
+
+for p in ax.patches:
+   ax.annotate('{:.1f}'.format(p.get_height()), (p.get_x()+0.1, p.get_height()+100))
+
+plt.show()
+
+#%%
